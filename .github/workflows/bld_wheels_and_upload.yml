@@ -158,10 +158,11 @@ jobs:
             
   upload_pypi:
     needs: [build_sdist,build_wheels_linux, build_wheels_windows_64,build_wheels_windows_32, build_macos_arm64_wheels, build_wheels_macos_x86]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/ibm-db/
+      
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
@@ -174,7 +175,7 @@ jobs:
         #if `name: artifact` is omitted, the action will create extra parent dir
         name: artifact
         #pattern: wheels_*
-        path: dist
+        path: dist/
 
     # Publish to TestPyPI using Twine
     - name: Publish to TestPyPI
