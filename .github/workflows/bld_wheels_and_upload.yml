@@ -173,15 +173,14 @@ jobs:
         # unpacks default artifact into dist/
         #if `name: artifact` is omitted, the action will create extra parent dir
         name: artifact
-        path: |
-          ./wheelhouse/*.whl
-          ./dist/*.tar.gz
+        #pattern: wheels_*
+        path: dist
     # Publish to TestPyPI using Twine
     - name: Publish to TestPyPI
-      uses: pypa/gh-action-pypi-publish@master
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         token: ${{ secrets.TEST_PYPI_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
     - name: Publish distribution to PyPI
       if: startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@master
+      uses: pypa/gh-action-pypi-publish@release/v1
