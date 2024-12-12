@@ -162,7 +162,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-    permissions:
+    #permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
      # id-token: write
     #upload to PyPI on every tag starting with 'v'
