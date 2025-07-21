@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - workfolw_test
   # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -21,12 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v3.0.1
         env:
           CIBW_BUILD: "*-win_amd64"
           CIBW_SKIP: "cp36-* pp*"
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4.6.2
         with:
           name: ibmdb-wheels64-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -41,12 +41,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v3.0.1
         env:
           CIBW_BUILD: "*-win32"
           CIBW_SKIP: "cp36-* pp*"
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4.6.2
         with:
           name: ibmdb-wheels32-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v3.0.1
         env:
          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
          CIBW_SKIP: "cp36-* *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
@@ -79,7 +79,7 @@ jobs:
               --wheel-dir {dest_dir}
               {wheel}
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4.6.2
         with:
           name: ibmdb-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -94,12 +94,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v3.0.1
         env:
           CIBW_SKIP: "cp36-* cp37-* cp38-* pp*"
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4.6.2
         with:
           name: ibmdb-wheelsarm64
           path: wheelhouse/*.whl
@@ -114,12 +114,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v3.0.1
         env:
           CIBW_SKIP: "cp36-* pp*"
           MACOSX_DEPLOYMENT_TARGET: 10.15
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4.6.2
         with:
           name: ibmdb-wheelsx86-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -152,7 +152,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.VERSION}}
 
       - name: Upload sdist
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: ibmdb-sdist
           path: dist/*.tar.gz
@@ -170,7 +170,7 @@ jobs:
     #upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/download-artifact@v4.1.7
+    - uses: actions/download-artifact@v4.3.0
       with:
         path: dist
         pattern: ibmdb-*
