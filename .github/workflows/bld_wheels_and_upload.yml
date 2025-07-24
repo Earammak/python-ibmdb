@@ -74,7 +74,7 @@ jobs:
       - uses: actions/upload-artifact@v4.6.2
         with: null
         name: ibmdb-wheels-${{ matrix.os }}
-        path: wheelhouse/*.whl
+          path: wheelhouse/*.whl
   build_wheels_macos_arm64:
     name: Build wheels on macOS ARM64
     runs-on: macos-14
