@@ -54,17 +54,18 @@ jobs:
   build_wheels_linux:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-  strategy:
-    matrix:
-      os: [ubuntu-latest]
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
 
-  steps:
-    - uses: actions/checkout@v4.2.2
+    steps:
+      - uses: actions/checkout@v4.2.2
 
-    - name: Build wheels
+      - name: Build wheels
       uses: pypa/cibuildwheel@v3.0.1
       env:
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+
         # Repair wheel and exclude driver-specific libs
         CIBW_REPAIR_WHEEL_COMMAND_LINUX: |
           auditwheel repair
