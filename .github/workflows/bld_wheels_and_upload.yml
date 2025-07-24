@@ -52,8 +52,8 @@ jobs:
           path: wheelhouse/*.whl
 
   build_wheels_linux:
-  name: Build wheels on ${{ matrix.os }}
-  runs-on: ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
   strategy:
     matrix:
       os: [ubuntu-latest]
@@ -64,7 +64,7 @@ jobs:
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.0.1
       env:
-        CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+        CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
         CIBW_SKIP: "*-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
 
         # Install IBM DB2 CLI driver *inside* the manylinux container
@@ -82,7 +82,7 @@ jobs:
           LD_LIBRARY_PATH=/opt/ibm/clidriver/lib:$LD_LIBRARY_PATH
 
         # Repair wheel and exclude driver-specific libs
-        CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
+        CIBW_REPAIR_WHEEL_COMMAND_LINUX: |
           auditwheel repair
           --exclude libdb2.so.1
           --exclude libDB2xml4c.so.58
