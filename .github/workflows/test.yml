@@ -2,7 +2,8 @@ name: Build Wheel with cibuildwheel
 
 on: 
   push:
-    branches: [workflow_test]
+    branches: 
+      workfolw_test
 
 jobs:
   build-wheel:
