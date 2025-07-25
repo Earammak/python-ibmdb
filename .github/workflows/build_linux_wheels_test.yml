@@ -61,9 +61,9 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
-         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-         CIBW_SKIP: "cp36-* cp37 *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
-         #CIBW_SKIP: "cp36-* cp37-* *-manylinux2014* *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
+         #CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+         #CIBW_SKIP: "cp36-* cp37 *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
+         CIBW_SKIP: "cp36-* cp37-* *-manylinux2014* *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
          #CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
       - uses: actions/upload-artifact@v4.4.3
         with:
@@ -161,7 +161,16 @@ jobs:
         path: dist
         pattern: ibmdb-*
         merge-multiple: true
-
+ 
+    - name: Publish distribution to TestPyPI
+      if: github.event_name == 'push'
+      uses: pypa/gh-action-pypi-publish@release/v1.12
+      with:
+        user: ${{ secrets.TEST_PYPI_USERNAME }}
+        password: ${{ secrets.TEST_PYPI_PASSWORD }}
+        repository_url: https://test.pypi.org/legacy/
+        
     - name: Publish distribution to PyPI
       if: startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@release/v1.12
+      
