@@ -3,7 +3,7 @@ name: Build and upload to PyPI
 on:
   push:
     branches:
-      - master 
+      - workfolw_test 
   # Sequence of patterns matched against refs/tags
     #tags:
     #  - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -149,10 +149,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
+    environment: testpypi
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
-
+    
     #upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push'
     steps:
