@@ -23,7 +23,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.22.0
         env:
          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64
-         CIBW_SKIP: "cp36-* *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
+         CIBW_SKIP: "cp36-* cp37-* *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
 
       - uses: actions/upload-artifact@v4.4.3
         with:
