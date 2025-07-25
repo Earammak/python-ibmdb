@@ -166,6 +166,7 @@ jobs:
       if: github.event_name == 'push'
       uses: pypa/gh-action-pypi-publish@release/v1.12
       with:
+        username: __token__
         password: ${{ secrets.TEST_PYPI_TOKEN1 }}
         repository_url: https://test.pypi.org/legacy/
         
