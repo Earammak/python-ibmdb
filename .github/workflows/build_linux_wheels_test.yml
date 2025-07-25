@@ -64,7 +64,7 @@ jobs:
          #CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
          #CIBW_SKIP: "cp36-* cp37 *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
          CIBW_SKIP: "cp36-* cp37-* *-manylinux2014* *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
-         #CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
+         CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
       - uses: actions/upload-artifact@v4.4.3
         with:
           name: ibmdb-wheels-${{ matrix.os }}
