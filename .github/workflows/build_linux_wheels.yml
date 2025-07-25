@@ -3,7 +3,7 @@ name: Build linux wheel
 on:
   push:
     branches:
-      - workfolw_testss
+      - workfolw_test
   # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -19,10 +19,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
-      - name: Set compiler flags for compatibility
-        run: |
-          echo "CFLAGS=-O2 -march=x86-64 -mtune=generic" >> $GITHUB_ENV
-          echo "CXXFLAGS=-O2 -march=x86-64 -mtune=generic" >> $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
