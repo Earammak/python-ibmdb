@@ -3,7 +3,7 @@ name: Build and upload to PyPI
 on:
   push:
     branches:
-      - workfolw_testsss
+      - workfolw_test
   # Sequence of patterns matched against refs/tags
     #tags:
     #  - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -64,6 +64,8 @@ jobs:
          #CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
          #CIBW_SKIP: "cp36-* cp37 *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
          CIBW_SKIP: "cp36-* cp37-* *-manylinux2014* *-musllinux_* pp* *-*linux_{aarch64,ppc64le}"
+         CIBW_ARCHS_LINUX: "auto64"
+         CIBW_REPAIR_WHEEL_COMMAND_LINUX: "true"
          CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
       - uses: actions/upload-artifact@v4.4.3
         with:
