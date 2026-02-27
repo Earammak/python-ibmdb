@@ -430,8 +430,9 @@ static void _python_ibm_db_set_array_param_cardinality(stmt_handle *stmt_res,
                                                        param_node *curr,
                                                        SQLSMALLINT cardinality)
 {
-    SQLHDESC hIPD = NULL;
-    SQLHDESC hAPD = NULL;
+
+    SQLHDESC hIPD = (SQLHDESC)0;
+    SQLHDESC hAPD = (SQLHDESC)0;
     SQLRETURN rc;
     curr->cardinality = cardinality;
     curr->actual_cardinality = cardinality;
