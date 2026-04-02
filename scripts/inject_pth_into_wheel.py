@@ -10,6 +10,7 @@ import os, sys, hashlib, base64, zipfile, glob, tempfile, shutil
 
 PTH_FILENAME = 'ibm_db_dll.pth'
 PTH_CONTENT = 'import _ibm_db_register_dll\n'
+REGISTER_MODULE = '_ibm_db_register_dll.py'
 
 
 def _record_line(name, content_bytes):
@@ -20,18 +21,24 @@ def _record_line(name, content_bytes):
 
 
 def inject_pth(whl_path):
-    """Add ibm_db_dll.pth to a wheel file."""
+    """Add ibm_db_dll.pth and _ibm_db_register_dll.py to a wheel file."""
     # Skip if already injected
     with zipfile.ZipFile(whl_path, 'r') as zin:
         if PTH_FILENAME in zin.namelist():
             print(f'  {PTH_FILENAME} already in {os.path.basename(whl_path)}, skipping')
             return
 
+    # Read the register module from the repo root
+    register_module_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), REGISTER_MODULE)
+    with open(register_module_path, 'rb') as f:
+        register_bytes = f.read()
+
     tmp_fd, tmp_path = tempfile.mkstemp(suffix='.whl')
     os.close(tmp_fd)
 
     pth_bytes = PTH_CONTENT.encode('utf-8')
     pth_record = _record_line(PTH_FILENAME, pth_bytes)
+    register_record = _record_line(REGISTER_MODULE, register_bytes)
 
     with zipfile.ZipFile(whl_path, 'r') as zin, \
          zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
@@ -39,17 +46,18 @@ def inject_pth(whl_path):
         for item in zin.infolist():
             data = zin.read(item.filename)
 
-            # Append our entry to the RECORD file
+            # Append our entries to the RECORD file
             if item.filename.endswith('/RECORD'):
-                data = data.rstrip(b'\n') + b'\n' + pth_record.encode('utf-8') + b'\n'
+                data = data.rstrip(b'\n') + b'\n' + pth_record.encode('utf-8') + b'\n' + register_record.encode('utf-8') + b'\n'
 
             zout.writestr(item, data)
 
-        # Add the .pth file at the wheel root
+        # Add the .pth file and register module at the wheel root
         zout.writestr(PTH_FILENAME, pth_bytes)
+        zout.writestr(REGISTER_MODULE, register_bytes)
 
     shutil.move(tmp_path, whl_path)
-    print(f'  Injected {PTH_FILENAME} into {os.path.basename(whl_path)}')
+    print(f'  Injected {PTH_FILENAME} and {REGISTER_MODULE} into {os.path.basename(whl_path)}')
 
 
 def main():

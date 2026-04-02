@@ -31,7 +31,7 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.install import install
 
 PACKAGE = 'ibm_db'
-VERSION = '3.2.6'
+VERSION = '3.2.6.1'
 LICENSE = 'Apache License 2.0'
 readme = os.path.join(os.path.dirname(__file__),'README.md')
 
@@ -499,9 +499,10 @@ package_data = { 'ibm_db_tests': [ 'run_individual_tests', '*.png', '*.jpg', 'co
 data_files = [ (get_python_lib(), ['./README.md']),
                (get_python_lib(), ['./CHANGES.md']),
                (get_python_lib(), ['./LICENSE']),
-               (get_python_lib(), ['./config.py.sample'])]
+               (get_python_lib(), ['./config.py.sample']),
+               (get_python_lib(), ['./ibm_db_dll.pth'])]
 
-modules = ['ibm_db_dbi', 'testfunctions', 'ibmdb_tests', 'ibm_db_ctx']
+modules = ['ibm_db_dbi', 'testfunctions', 'ibmdb_tests', 'ibm_db_ctx', '_ibm_db_register_dll']
 
 if 'zos' == sys.platform:
     ext_modules = _ext_modules(os.path.join(os.getcwd(), include_dir), library, ibm_db_lib, ibm_db_lib_runtime)
