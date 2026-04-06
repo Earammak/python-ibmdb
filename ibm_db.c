@@ -22,7 +22,7 @@
 +--------------------------------------------------------------------------+
 */
 
-#define MODULE_RELEASE "3.2.6.7"
+#define MODULE_RELEASE "3.2.6.8"
 
 #include <Python.h>
 #include <datetime.h>

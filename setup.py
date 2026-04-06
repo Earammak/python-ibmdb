@@ -499,8 +499,7 @@ package_data = { 'ibm_db_tests': [ 'run_individual_tests', '*.png', '*.jpg', 'co
 data_files = [ (get_python_lib(), ['./README.md']),
                (get_python_lib(), ['./CHANGES.md']),
                (get_python_lib(), ['./LICENSE']),
-               (get_python_lib(), ['./config.py.sample']),
-               (get_python_lib(), ['./ibm_db_dll.pth'])]
+               (get_python_lib(), ['./config.py.sample'])]
 
 modules = ['ibm_db_dbi', 'testfunctions', 'ibmdb_tests', 'ibm_db_ctx', '_ibm_db_register_dll']
 
