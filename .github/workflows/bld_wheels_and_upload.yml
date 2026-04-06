@@ -184,7 +184,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1.12
 
   upload_testpypi:
-    needs: [build_wheels_windows_64, build_wheels_windows_32, build_sdist]
+    needs: [build_wheels_windows_64, build_wheels_windows_32, build_wheels_linux, build_wheels_macos_arm64, build_wheels_macos_x86, build_sdist]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
