@@ -27,9 +27,6 @@ jobs:
           CIBW_BUILD: "*-win_amd64"
           CIBW_SKIP: "cp38-*"
 
-      - name: Inject ibm_db_dll.pth into wheels
-        run: python scripts/inject_pth_into_wheel.py wheelhouse
-
       - uses: actions/upload-artifact@v4.4.3
         with:
           name: ibmdb-wheels64-${{ matrix.os }}
@@ -49,9 +46,6 @@ jobs:
         env:
           CIBW_BUILD: "*-win32"
           CIBW_SKIP: "cp38-*"
-
-      - name: Inject ibm_db_dll.pth into wheels
-        run: python scripts/inject_pth_into_wheel.py wheelhouse
 
       - uses: actions/upload-artifact@v4.4.3
         with:
