@@ -47,7 +47,7 @@ jobs:
         run: |
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
-          python -m pip install .
+          python -m pip install . --verbose 2>&1 | Tee-Object -FilePath install_log.txt
 
       - name: Generate config files from secrets
         shell: powershell
