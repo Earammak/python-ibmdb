@@ -53,17 +53,23 @@ jobs:
 
       - name: Generate config files from secrets
         shell: powershell
+        env:
+          DB2_DATABASE: ${{ secrets.DB2_DATABASE }}
+          DB2_USER: ${{ secrets.DB2_USER }}
+          DB2_PASSWD: ${{ secrets.DB2_PASSWD }}
+          DB2_HOSTNAME: ${{ secrets.DB2_HOSTNAME }}
+          DB2_PORT: ${{ secrets.DB2_PORT }}
         run: |
           Copy-Item config.py.sample config.py
-          @"
-          {
-            "database" : "${{ secrets.DB2_DATABASE }}",
-            "user" : "${{ secrets.DB2_USER }}",
-            "password" : "${{ secrets.DB2_PASSWD }}",
-            "hostname" : "${{ secrets.DB2_HOSTNAME }}",
-            "port" : ${{ secrets.DB2_PORT }}
-          }
-          "@ | Set-Content -Path config.json -Encoding UTF8
+          $json = @{
+            database = $env:DB2_DATABASE
+            user     = $env:DB2_USER
+            password = $env:DB2_PASSWD
+            hostname = $env:DB2_HOSTNAME
+            port     = [int]$env:DB2_PORT
+          } | ConvertTo-Json
+          $json | Set-Content -Path config.json -Encoding UTF8
+          Write-Host "config.json created"
 
       - name: Write db2dsdriver.cfg into clidriver/cfg
         shell: powershell
