@@ -43,13 +43,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install ibm_db from source
-        shell: pwsh
+        shell: powershell
         run: |
           python -m pip install --upgrade pip
           python -m pip install .
 
       - name: Generate config files from secrets
-        shell: pwsh
+        shell: powershell
         run: |
           Copy-Item config.py.sample config.py
           @"
@@ -63,7 +63,7 @@ jobs:
           "@ | Set-Content -Path config.json -Encoding UTF8
 
       - name: Write db2dsdriver.cfg into clidriver/cfg
-        shell: pwsh
+        shell: powershell
         run: |
           $cfgDir = python -c @"
           import os, site, glob
@@ -106,7 +106,7 @@ jobs:
           Write-Host "--- end ---"
 
       - name: Run test suite
-        shell: pwsh
+        shell: powershell
         env:
           DB2_USER: ${{ secrets.DB2_USER }}
           DB2_PASSWD: ${{ secrets.DB2_PASSWD }}
