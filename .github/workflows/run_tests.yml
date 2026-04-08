@@ -1,0 +1,152 @@
+name: Run Test Suite
+
+on:
+  push:
+    branches:
+      - test_dll_issue
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'Runner OS'
+        required: true
+        type: choice
+        options:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+          - all
+        default: 'ubuntu-latest'
+      python-version:
+        description: 'Python version'
+        required: true
+        type: choice
+        options:
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
+          - '3.14'
+          - 'all'
+        default: '3.14'
+      test-pattern:
+        description: 'Test glob pattern (e.g. test_001*.py). Leave empty to run all.'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  run_tests:
+    name: Test on ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ github.event.inputs.os == 'all' && fromJSON('["ubuntu-latest","windows-latest","macos-latest"]') || fromJSON(format('["{0}"]', github.event.inputs.os || 'ubuntu-latest')) }}
+        python-version: ${{ github.event.inputs.python-version == 'all' && fromJSON('["3.9","3.10","3.11","3.12","3.13","3.14"]') || fromJSON(format('["{0}"]', github.event.inputs.python-version || '3.14')) }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install ibm_db from source
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+
+      - name: Generate config.json from secrets
+        shell: bash
+        run: |
+          cat > config.json <<ENDOFCFG
+          {
+            "database" : "${{ secrets.DB2_DATABASE }}",
+            "user" : "${{ secrets.DB2_USER }}",
+            "password" : "${{ secrets.DB2_PASSWD }}",
+            "hostname" : "${{ secrets.DB2_HOSTNAME }}",
+            "port" : ${{ secrets.DB2_PORT }}
+          }
+          ENDOFCFG
+
+      - name: Write db2dsdriver.cfg into clidriver/cfg
+        shell: bash
+        run: |
+          CFG_DIR=$(python -c "
+          import os, sys, glob, importlib.util
+
+          def find_cfg():
+              candidates = []
+
+              # 1. IBM_DB_HOME env var
+              ibm_db_home = os.environ.get('IBM_DB_HOME', '').strip('\"')
+              if ibm_db_home:
+                  candidates.append(os.path.join(ibm_db_home, 'cfg'))
+
+              # 2. PATH — look for clidriver or dsdriver bin dirs
+              for p in os.environ.get('PATH', '').split(os.pathsep):
+                  parent = os.path.dirname(p)
+                  if os.path.basename(p) == 'bin':
+                      for sub in ['clidriver', 'dsdriver', '']:
+                          base = os.path.join(parent, sub) if sub else parent
+                          candidates.append(os.path.join(base, 'cfg'))
+
+              # 3. ibm_db site-package (user or system site-packages)
+              spec = importlib.util.find_spec('ibm_db')
+              if spec and spec.origin:
+                  pkg_dir = os.path.dirname(spec.origin)
+                  for sub in ['clidriver/cfg', 'dsdriver/cfg']:
+                      candidates.append(os.path.join(pkg_dir, sub))
+
+              # 4. Common system install paths
+              if sys.platform == 'win32':
+                  candidates.append(r'C:\Program Files\IBM\clidriver\cfg')
+              else:
+                  candidates.extend([
+                      '/opt/ibm/db2/clidriver/cfg',
+                      '/opt/ibm/dsdriver/cfg',
+                      os.path.expanduser('~/sqllib/cfg'),
+                  ])
+
+              # Return the first candidate whose parent dir exists
+              for c in candidates:
+                  if os.path.isdir(os.path.dirname(c)):
+                      return c
+
+              return ''
+
+          print(find_cfg())
+          ")
+
+          if [ -z "$CFG_DIR" ]; then
+            echo "::error::Could not locate clidriver/cfg or dsdriver/cfg directory"
+            exit 1
+          fi
+
+          echo "Writing db2dsdriver.cfg to $CFG_DIR"
+          mkdir -p "$CFG_DIR"
+          cat > "$CFG_DIR/db2dsdriver.cfg" <<EOF
+          <configuration>
+            <dsncollection>
+              <dsn alias="${{ secrets.DB2_DATABASE }}" name="${{ secrets.DB2_DATABASE }}" host="${{ secrets.DB2_HOSTNAME }}" port="${{ secrets.DB2_PORT }}">
+                <parameter name="Protocol" value="TCPIP"/>
+              </dsn>
+            </dsncollection>
+            <databases>
+              <database name="${{ secrets.DB2_DATABASE }}" host="${{ secrets.DB2_HOSTNAME }}" port="${{ secrets.DB2_PORT }}">
+                <parameter name="Protocol" value="TCPIP"/>
+              </database>
+            </databases>
+          </configuration>
+          EOF
+
+      - name: Run test suite
+        shell: bash
+        env:
+          DB2_USER: ${{ secrets.DB2_USER }}
+          DB2_PASSWD: ${{ secrets.DB2_PASSWD }}
+          SINGLE_PYTHON_TEST: ${{ github.event.inputs.test-pattern }}
+        run: python ibmdb_tests.py

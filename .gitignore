@@ -4,6 +4,8 @@ dist
 ibm_db.egg-info
 *.pyc
 config.py
+config.json
+clidriver/
 libdsnao64c.*
 *~
 *.out

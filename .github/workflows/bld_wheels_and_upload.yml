@@ -1,4 +1,5 @@
-name: Build and upload to PyPI 
+
+me: Build and upload to PyPI 
 # Build on every workflow_dispatch, branch push, tag push, and pull request change
 on:
   workflow_dispatch:
@@ -6,7 +7,6 @@ on:
   push:
     branches:
       - master
-      - test_dll_issue
   # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -30,7 +30,7 @@ jobs:
       - name: Inject ibm_db_dll.pth into wheels
         run: python scripts/inject_pth_into_wheel.py wheelhouse
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4
         with:
           name: ibmdb-wheels64-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -53,7 +53,7 @@ jobs:
       - name: Inject ibm_db_dll.pth into wheels
         run: python scripts/inject_pth_into_wheel.py wheelhouse
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4
         with:
           name: ibmdb-wheels32-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -88,7 +88,7 @@ jobs:
               --wheel-dir {dest_dir}
               {wheel}
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4
         with:
           name: ibmdb-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -108,7 +108,7 @@ jobs:
           CIBW_SKIP: "cp38-*"
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4
         with:
           name: ibmdb-wheelsarm64
           path: wheelhouse/*.whl
@@ -129,7 +129,7 @@ jobs:
           CIBW_SKIP: "cp38-*"
           MACOSX_DEPLOYMENT_TARGET: 10.15
 
-      - uses: actions/upload-artifact@v4.4.3
+      - uses: actions/upload-artifact@v4
         with:
           name: ibmdb-wheelsx86-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -155,7 +155,7 @@ jobs:
           rm -rf "$DIRNAME"
 
       - name: Upload sdist
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v4
         with:
           name: ibmdb-sdist
           path: dist/*.tar.gz
