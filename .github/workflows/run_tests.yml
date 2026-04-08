@@ -149,5 +149,9 @@ jobs:
         env:
           DB2_USER: ${{ secrets.DB2_USER }}
           DB2_PASSWD: ${{ secrets.DB2_PASSWD }}
-          SINGLE_PYTHON_TEST: ${{ github.event.inputs.test-pattern }}
-        run: python ibmdb_tests.py
+        run: |
+          TEST_PATTERN="${{ github.event.inputs.test-pattern }}"
+          if [ -n "$TEST_PATTERN" ]; then
+            export SINGLE_PYTHON_TEST="$TEST_PATTERN"
+          fi
+          python ibmdb_tests.py
