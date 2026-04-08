@@ -6,16 +6,6 @@ on:
       - test_dll_issue
   workflow_dispatch:
     inputs:
-      os:
-        description: 'Runner OS'
-        required: true
-        type: choice
-        options:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-          - all
-        default: 'ubuntu-latest'
       python-version:
         description: 'Python version'
         required: true
@@ -37,12 +27,11 @@ on:
 
 jobs:
   run_tests:
-    name: Test on ${{ matrix.os }} / Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
+    name: Test on self-hosted / Python ${{ matrix.python-version }}
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ github.event.inputs.os == 'all' && fromJSON('["ubuntu-latest","windows-latest","macos-latest"]') || fromJSON(format('["{0}"]', github.event.inputs.os || 'ubuntu-latest')) }}
         python-version: ${{ github.event.inputs.python-version == 'all' && fromJSON('["3.9","3.10","3.11","3.12","3.13","3.14"]') || fromJSON(format('["{0}"]', github.event.inputs.python-version || '3.14')) }}
 
     steps:
