@@ -76,60 +76,37 @@ jobs:
       - name: Write db2dsdriver.cfg into clidriver/cfg
         shell: bash
         run: |
+          # Find the cfg dir next to the installed ibm_db package
           CFG_DIR=$(python -c "
-          import os, sys, glob, importlib.util
+          import os, site, glob
 
-          def find_cfg():
-              candidates = []
+          # Search all site-packages for clidriver/cfg or dsdriver/cfg
+          dirs = site.getsitepackages() + [site.getusersitepackages()]
+          for sp in dirs:
+              for pattern in ['ibm_db/clidriver/cfg', 'clidriver/cfg', 'ibm_db/dsdriver/cfg']:
+                  matches = glob.glob(os.path.join(sp, pattern))
+                  if matches:
+                      print(matches[0])
+                      raise SystemExit(0)
 
-              # 1. IBM_DB_HOME env var
-              ibm_db_home = os.environ.get('IBM_DB_HOME', '').strip('\"')
-              if ibm_db_home:
-                  candidates.append(os.path.join(ibm_db_home, 'cfg'))
-
-              # 2. PATH — look for clidriver or dsdriver bin dirs
-              for p in os.environ.get('PATH', '').split(os.pathsep):
-                  parent = os.path.dirname(p)
-                  if os.path.basename(p) == 'bin':
-                      for sub in ['clidriver', 'dsdriver', '']:
-                          base = os.path.join(parent, sub) if sub else parent
-                          candidates.append(os.path.join(base, 'cfg'))
-
-              # 3. ibm_db site-package (user or system site-packages)
-              spec = importlib.util.find_spec('ibm_db')
-              if spec and spec.origin:
-                  pkg_dir = os.path.dirname(spec.origin)
-                  for sub in ['clidriver/cfg', 'dsdriver/cfg']:
-                      candidates.append(os.path.join(pkg_dir, sub))
-
-              # 4. Common system install paths
-              if sys.platform == 'win32':
-                  candidates.append(r'C:\Program Files\IBM\clidriver\cfg')
-              else:
-                  candidates.extend([
-                      '/opt/ibm/db2/clidriver/cfg',
-                      '/opt/ibm/dsdriver/cfg',
-                      os.path.expanduser('~/sqllib/cfg'),
-                  ])
-
-              # Return the first candidate whose parent dir exists
-              for c in candidates:
-                  if os.path.isdir(os.path.dirname(c)):
-                      return c
-
-              return ''
-
-          print(find_cfg())
+          # Fallback: IBM_DB_HOME
+          ibm_db_home = os.environ.get('IBM_DB_HOME', '')
+          if ibm_db_home:
+              print(os.path.join(ibm_db_home, 'cfg'))
+              raise SystemExit(0)
           ")
 
           if [ -z "$CFG_DIR" ]; then
-            echo "::error::Could not locate clidriver/cfg or dsdriver/cfg directory"
+            echo "::error::Could not locate clidriver/cfg directory"
             exit 1
           fi
 
           echo "Writing db2dsdriver.cfg to $CFG_DIR"
           mkdir -p "$CFG_DIR"
-          cat > "$CFG_DIR/db2dsdriver.cfg" <<EOF
+
+          # Write the XML without leading whitespace
+          cat > "$CFG_DIR/db2dsdriver.cfg" <<-EOF
+          <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
           <configuration>
             <dsncollection>
               <dsn alias="${{ secrets.DB2_DATABASE }}" name="${{ secrets.DB2_DATABASE }}" host="${{ secrets.DB2_HOSTNAME }}" port="${{ secrets.DB2_PORT }}">
@@ -142,7 +119,11 @@ jobs:
               </database>
             </databases>
           </configuration>
-          EOF
+	EOF
+
+          echo "--- db2dsdriver.cfg content ---"
+          cat "$CFG_DIR/db2dsdriver.cfg"
+          echo "--- end ---"
 
       - name: Run test suite
         shell: bash
