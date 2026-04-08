@@ -42,13 +42,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install ibm_db from source
+      - name: Install ibm_db
         shell: powershell
         run: |
           $ErrorActionPreference = "Continue"
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
-          python -m pip install . --verbose
+          python -m pip install ibm_db
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Generate config files from secrets
