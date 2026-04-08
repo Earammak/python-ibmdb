@@ -104,8 +104,7 @@ jobs:
           echo "Writing db2dsdriver.cfg to $CFG_DIR"
           mkdir -p "$CFG_DIR"
 
-          # Write the XML without leading whitespace
-          cat > "$CFG_DIR/db2dsdriver.cfg" <<-EOF
+          cat > "$CFG_DIR/db2dsdriver.cfg" <<EOF
           <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
           <configuration>
             <dsncollection>
@@ -119,7 +118,7 @@ jobs:
               </database>
             </databases>
           </configuration>
-	EOF
+          EOF
 
           echo "--- db2dsdriver.cfg content ---"
           cat "$CFG_DIR/db2dsdriver.cfg"
