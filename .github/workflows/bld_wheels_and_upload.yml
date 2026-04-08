@@ -1,5 +1,5 @@
 
-me: Build and upload to PyPI 
+name: Build and upload to PyPI 
 # Build on every workflow_dispatch, branch push, tag push, and pull request change
 on:
   workflow_dispatch:
