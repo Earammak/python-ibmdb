@@ -60,6 +60,7 @@ jobs:
           DB2_HOSTNAME: ${{ secrets.DB2_HOSTNAME }}
           DB2_PORT: ${{ secrets.DB2_PORT }}
         run: |
+          $ErrorActionPreference = "Continue"
           Write-Host "Checking secrets are set..."
           Write-Host "DB2_DATABASE is set: $([bool]$env:DB2_DATABASE)"
           Write-Host "DB2_HOSTNAME is set: $([bool]$env:DB2_HOSTNAME)"
@@ -67,7 +68,7 @@ jobs:
           Write-Host "DB2_USER is set: $([bool]$env:DB2_USER)"
           Write-Host "DB2_PASSWD is set: $([bool]$env:DB2_PASSWD)"
           if (-not $env:DB2_DATABASE) {
-            Write-Error "DB2_DATABASE secret is not set! Go to repo Settings > Secrets > Actions and add it."
+            Write-Error "DB2_DATABASE secret is not set!"
             exit 1
           }
           Copy-Item config.py.sample config.py
@@ -79,9 +80,11 @@ jobs:
             hostname = $env:DB2_HOSTNAME
             port     = $port
           } | ConvertTo-Json
-          $json | Set-Content -Path config.json -Encoding UTF8
+          # Write without BOM — Python's json.load fails on UTF-8 BOM
+          [System.IO.File]::WriteAllText("$PWD\config.json", $json)
           Write-Host "config.json created:"
           Get-Content config.json
+          Write-Host "config.json size: $((Get-Item config.json).Length) bytes"
 
       - name: Write db2dsdriver.cfg into clidriver/cfg
         shell: powershell
