@@ -45,6 +45,7 @@ jobs:
       - name: Install ibm_db from source
         shell: powershell
         run: |
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           python -m pip install .
 
