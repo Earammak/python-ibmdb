@@ -45,9 +45,11 @@ jobs:
       - name: Install ibm_db from source
         shell: powershell
         run: |
+          $ErrorActionPreference = "Continue"
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
-          python -m pip install . --verbose 2>&1 | Tee-Object -FilePath install_log.txt
+          python -m pip install . --verbose
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Generate config files from secrets
         shell: powershell
