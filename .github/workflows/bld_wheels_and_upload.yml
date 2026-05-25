@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+      - test_pypi_upload
   # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -185,3 +186,27 @@ jobs:
         verbose: true
         skip-existing: true
         attestations: false
+
+  upload_test_pypi:
+    name: Upload to Test PyPI
+    needs: [build_wheels_windows_64, build_wheels_windows_32, build_wheels_linux, build_wheels_macos_arm64, build_wheels_macos_x86, build_sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+
+    # Upload to Test PyPI only on pushes to test_pypi_upload branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/test_pypi_upload'
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          pattern: ibmdb-*
+          merge-multiple: true
+
+      - name: Publish distribution to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1.13
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+          skip-existing: true
+          attestations: false
