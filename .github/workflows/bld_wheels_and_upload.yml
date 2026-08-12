@@ -25,7 +25,7 @@ jobs:
         env:
           CIBW_BUILD: "*-win_amd64"
           CIBW_SKIP: "*t-*"
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "python -c \"import shutil; shutil.copy2('{wheel}', '{dest_dir}')\""
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "python -c \"import shutil,sys; shutil.copy2(sys.argv[1], sys.argv[2])\" {wheel} {dest_dir}"
 
       - name: Inject ibm_db_dll.pth into wheels
         run: python scripts/inject_pth_into_wheel.py wheelhouse
@@ -49,7 +49,7 @@ jobs:
         env:
           CIBW_BUILD: "*-win32"
           CIBW_SKIP: "*t-*"
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "python -c \"import shutil; shutil.copy2('{wheel}', '{dest_dir}')\""
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "python -c \"import shutil,sys; shutil.copy2(sys.argv[1], sys.argv[2])\" {wheel} {dest_dir}"
 
       - name: Inject ibm_db_dll.pth into wheels
         run: python scripts/inject_pth_into_wheel.py wheelhouse
