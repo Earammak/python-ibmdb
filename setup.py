@@ -289,7 +289,7 @@ if('win32' in sys.platform):
 
 # Get version of clidriver for autodownload from environment variable CLIDRIVER_VERSION
 # Default version is v12.1.0 for non-linux platform.
-clidriver_version = os.getenv("CLIDRIVER_VERSION", "v12.1.0")
+clidriver_version = os.getenv("CLIDRIVER_VERSION", "v12.1.4")
 
 # Default version is v11.5.9 for linux. clidriver v12.1.0 for linux uses x86_64_V2 instruction set which is not supported by cibuildwheel
 if ('linux' == sys.platform):
@@ -370,7 +370,7 @@ if ((ibm_db_home == '') and (ibm_db_dir == '') and (ibm_db_lib == '')):
             cliFileName = 'macarm64_odbc_cli.tar.gz'
             arch_ = 'arm64'
             if(clidriver_version.startswith("v11")):
-                clidriver_version = "v12.1.0"
+                clidriver_version = "v12.1.4"
         else:
             if(clidriver_version.startswith("v12")):
                 clidriver_version = "v11.5.9"
@@ -564,6 +564,7 @@ setup( name    = PACKAGE,
                     'Programming Language :: Python :: 3.12',
                     'Programming Language :: Python :: 3.13',
                     'Programming Language :: Python :: 3.14',
+                    'Programming Language :: Python :: 3.15',
                     'Topic :: Database :: Front-Ends'],
 
     long_description = open(readme).read(),
