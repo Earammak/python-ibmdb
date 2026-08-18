@@ -118,6 +118,14 @@ SQL_TXN_REPEATABLE_READ = ibm_db.SQL_TXN_REPEATABLE_READ
 SQL_TXN_SERIALIZABLE = ibm_db.SQL_TXN_SERIALIZABLE
 SQL_TXN_NO_COMMIT = ibm_db.SQL_TXN_NO_COMMIT
 
+# DRDA fast load (zLOAD) constants are exported only when available in CLI headers.
+SQL_ATTR_DB2ZLOAD_LOADSTMT = getattr(ibm_db, 'SQL_ATTR_DB2ZLOAD_LOADSTMT', None)
+SQL_ATTR_DB2ZLOAD_UTILITYID = getattr(ibm_db, 'SQL_ATTR_DB2ZLOAD_UTILITYID', None)
+SQL_ATTR_DB2ZLOAD_BEGIN = getattr(ibm_db, 'SQL_ATTR_DB2ZLOAD_BEGIN', None)
+SQL_ATTR_DB2ZLOAD_END = getattr(ibm_db, 'SQL_ATTR_DB2ZLOAD_END', None)
+SQL_DIAG_DB2ZLOAD_RETCODE = getattr(ibm_db, 'SQL_DIAG_DB2ZLOAD_RETCODE', None)
+SQL_DIAG_DB2ZLOAD_LOAD_MSGS = getattr(ibm_db, 'SQL_DIAG_DB2ZLOAD_LOAD_MSGS', None)
+
 # Module globals
 apilevel = '2.0'
 threadsafety = 0
@@ -2090,6 +2098,115 @@ class Cursor(object):
         LogMsg(INFO, "exit fetch_tuple()")
         return result
 
+    def _ensure_zload_stmt(self):
+        if self.stmt_handler is None:
+            # zLOAD works with an allocated statement handle; prepare creates one.
+            self.stmt_handler = ibm_db.prepare(self.conn_handler, "VALUES 1")
+
+    def _assert_zload_support(self):
+        required = ("zload_begin", "zload_put_data", "zload_end", "zload_get_diag")
+        for name in required:
+            if not hasattr(ibm_db, name):
+                raise NotSupportedError(
+                    "DRDA fast load (zLOAD) APIs are not available in this ibm_db build"
+                )
+
+    def zload_begin(self, load_statement, utility_id=None):
+        """Begin a DRDA fast load (zLOAD) operation on this cursor."""
+        LogMsg(INFO, "entry zload_begin()")
+        self._assert_zload_support()
+        if not isinstance(load_statement, string_types):
+            raise InterfaceError("zload_begin expects load_statement as string")
+        if utility_id is not None and not isinstance(utility_id, string_types):
+            raise InterfaceError("zload_begin expects utility_id as string when provided")
+        self._ensure_zload_stmt()
+        try:
+            if utility_id is None:
+                rc = ibm_db.zload_begin(self.stmt_handler, load_statement)
+            else:
+                rc = ibm_db.zload_begin(self.stmt_handler, load_statement, utility_id)
+        except Exception as inst:
+            self.messages.append(_get_exception(inst))
+            raise self.messages[len(self.messages) - 1]
+        LogMsg(INFO, "exit zload_begin()")
+        return rc
+
+    def zload_put_data(self, data):
+        """Send one bytes-like chunk to an active DRDA fast load (zLOAD)."""
+        LogMsg(INFO, "entry zload_put_data()")
+        self._assert_zload_support()
+        if not isinstance(data, (bytes, bytearray, memoryview)):
+            raise InterfaceError("zload_put_data expects bytes-like data")
+        if self.stmt_handler is None:
+            raise ProgrammingError("zload_put_data called before zload_begin")
+        try:
+            rc = ibm_db.zload_put_data(self.stmt_handler, data)
+        except Exception as inst:
+            self.messages.append(_get_exception(inst))
+            raise self.messages[len(self.messages) - 1]
+        LogMsg(INFO, "exit zload_put_data()")
+        return rc
+
+    def zload_end(self):
+        """Finalize an active DRDA fast load (zLOAD)."""
+        LogMsg(INFO, "entry zload_end()")
+        self._assert_zload_support()
+        if self.stmt_handler is None:
+            raise ProgrammingError("zload_end called before zload_begin")
+        try:
+            rc = ibm_db.zload_end(self.stmt_handler)
+        except Exception as inst:
+            self.messages.append(_get_exception(inst))
+            raise self.messages[len(self.messages) - 1]
+        LogMsg(INFO, "exit zload_end()")
+        return rc
+
+    def zload_get_diag(self):
+        """Return zLOAD diagnostics as a dictionary with retcode/messages."""
+        LogMsg(INFO, "entry zload_get_diag()")
+        self._assert_zload_support()
+        if self.stmt_handler is None:
+            raise ProgrammingError("zload_get_diag called before zload_begin")
+        try:
+            diag = ibm_db.zload_get_diag(self.stmt_handler)
+        except Exception as inst:
+            self.messages.append(_get_exception(inst))
+            raise self.messages[len(self.messages) - 1]
+        LogMsg(INFO, "exit zload_get_diag()")
+        return diag
+
+    def zload_from_file(self, load_statement, file_path, utility_id=None, chunk_size=1024 * 1024):
+        """Run DRDA fast load (zLOAD) for a local file using chunked SQLPutData calls."""
+        LogMsg(INFO, "entry zload_from_file()")
+        if not isinstance(file_path, string_types):
+            raise InterfaceError("zload_from_file expects file_path as string")
+        if not isinstance(chunk_size, int_types) or chunk_size <= 0:
+            raise InterfaceError("zload_from_file expects chunk_size as a positive integer")
+
+        if not self.zload_begin(load_statement, utility_id):
+            raise ProgrammingError("zload_begin returned False")
+        try:
+            with open(file_path, 'rb') as load_file:
+                while True:
+                    chunk = load_file.read(chunk_size)
+                    if not chunk:
+                        break
+                    if not self.zload_put_data(chunk):
+                        raise ProgrammingError("zload_put_data returned False")
+            if not self.zload_end():
+                raise ProgrammingError("zload_end returned False")
+            diag = self.zload_get_diag()
+        except Exception:
+            # Try to end the zLOAD to leave the statement in a clean state.
+            try:
+                self.zload_end()
+            except Exception:
+                pass
+            raise
+
+        LogMsg(INFO, "exit zload_from_file()")
+        return diag
+
     def setinputsizes(self, sizes):
         """This method currently does nothing."""
         pass
@@ -2321,6 +2438,30 @@ class AsyncCursor:
     async def fetch_tuple(self):
         """Fetch one row as a tuple from the current result set."""
         return await asyncio.to_thread(self._cursor.fetch_tuple)
+
+    async def zload_begin(self, load_statement, utility_id=None):
+        return await asyncio.to_thread(
+            self._cursor.zload_begin, load_statement, utility_id
+        )
+
+    async def zload_put_data(self, data):
+        return await asyncio.to_thread(self._cursor.zload_put_data, data)
+
+    async def zload_end(self):
+        return await asyncio.to_thread(self._cursor.zload_end)
+
+    async def zload_get_diag(self):
+        return await asyncio.to_thread(self._cursor.zload_get_diag)
+
+    async def zload_from_file(self, load_statement, file_path, utility_id=None,
+                              chunk_size=1024 * 1024):
+        return await asyncio.to_thread(
+            self._cursor.zload_from_file,
+            load_statement,
+            file_path,
+            utility_id,
+            chunk_size,
+        )
 
     async def stmt_errormsg(self):
         return await asyncio.to_thread(self._cursor.stmt_errormsg)
