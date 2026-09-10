@@ -190,3 +190,28 @@ jobs:
         verbose: true
         skip-existing: true
         attestations: false
+
+  upload_testpypi:
+    needs: [build_wheels_windows_64, build_wheels_windows_32, build_wheels_linux, build_wheels_macos_arm64, build_wheels_macos_x86, build_sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+
+    # Upload to TestPyPI on pushes to the working branch.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/python315wheels_support'
+    steps:
+    - uses: actions/download-artifact@v7
+      with:
+        path: dist
+        pattern: ibmdb-*
+        merge-multiple: true
+
+    - name: Publish distribution to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1.13
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        verbose: true
+        skip-existing: true
+        attestations: false

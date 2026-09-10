@@ -32,7 +32,7 @@ from setuptools.command.build_py import build_py
 from setuptools.command.install import install
 
 PACKAGE = 'ibm_db'
-VERSION = '3.3.0'
+VERSION = '3.2.8.rc1'
 LICENSE = 'Apache License 2.0'
 readme = os.path.join(os.path.dirname(__file__),'README.md')
 
