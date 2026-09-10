@@ -198,7 +198,7 @@ jobs:
       id-token: write
 
     # Upload to TestPyPI on pushes to the working branch.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/python315wheels_support'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/final_python315_support'
     steps:
     - uses: actions/download-artifact@v7
       with:
