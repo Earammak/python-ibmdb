@@ -1919,10 +1919,40 @@ static int _python_ibm_db_bind_column_helper(stmt_handle *stmt_res)
             break;
 
         case SQL_BIGINT:
-        case SQL_DECFLOAT:
-            snprintf(messageStr, sizeof(messageStr), "Case SQL_BIGINT/SQL_DECFLOAT, i=%d", i);
+            snprintf(messageStr, sizeof(messageStr), "Case SQL_BIGINT, i=%d", i);
             LogMsg(DEBUG, messageStr);
             in_length = stmt_res->column_info[i].size + 3;
+            row_data->str_val = (SQLCHAR *)ALLOC_N(char, in_length);
+            if (row_data->str_val == NULL)
+            {
+                LogMsg(EXCEPTION, "Failed to Allocate Memory for str_val");
+                PyErr_SetString(PyExc_Exception, "Failed to Allocate Memory");
+                return -1;
+            }
+            snprintf(messageStr, sizeof(messageStr), "Allocated memory for str_val with length %d", in_length);
+            LogMsg(DEBUG, messageStr);
+            Py_BEGIN_ALLOW_THREADS;
+            snprintf(messageStr, sizeof(messageStr),
+                     "Calling SQLBindCol with parameters: hstmt=%p, col=%d, sql_type=SQL_C_CHAR, buffer_size=%d, out_length=%p",
+                     stmt_res->hstmt, i + 1, in_length, &stmt_res->row_data[i].out_length);
+            LogMsg(DEBUG, messageStr);
+            rc = SQLBindCol((SQLHSTMT)stmt_res->hstmt, (SQLUSMALLINT)(i + 1),
+                            SQL_C_CHAR, row_data->str_val, in_length,
+                            (SQLINTEGER *)(&stmt_res->row_data[i].out_length));
+            Py_END_ALLOW_THREADS;
+            snprintf(messageStr, sizeof(messageStr), "SQLBindCol returned %d for column %d", rc, i);
+            LogMsg(DEBUG, messageStr);
+            if (rc == SQL_ERROR)
+            {
+                _python_ibm_db_check_sql_errors((SQLHSTMT)stmt_res->hstmt,
+                                                SQL_HANDLE_STMT, rc, 1, NULL, -1, 1);
+            }
+            break;
+
+        case SQL_DECFLOAT:
+            snprintf(messageStr, sizeof(messageStr), "Case SQL_DECFLOAT, i=%d", i);
+            LogMsg(DEBUG, messageStr);
+            in_length = MAX_DECFLOAT_LENGTH;
             row_data->str_val = (SQLCHAR *)ALLOC_N(char, in_length);
             if (row_data->str_val == NULL)
             {
@@ -2375,8 +2405,14 @@ static rowset_col_buffer *_python_ibm_db_bind_rowset_columns(
             memset(bufs[i].data, 0, in_length * row_array_size);
             break;
         case SQL_BIGINT:
-        case SQL_DECFLOAT:
             in_length = stmt_res->column_info[i].size + 3;
+            bufs[i].elem_size = in_length; bufs[i].ctype = SQL_C_CHAR;
+            bufs[i].data = (void *)ALLOC_N(char, in_length * row_array_size);
+            if (bufs[i].data == NULL) goto alloc_error;
+            memset(bufs[i].data, 0, in_length * row_array_size);
+            break;
+        case SQL_DECFLOAT:
+            in_length = MAX_DECFLOAT_LENGTH;
             bufs[i].elem_size = in_length; bufs[i].ctype = SQL_C_CHAR;
             bufs[i].data = (void *)ALLOC_N(char, in_length * row_array_size);
             if (bufs[i].data == NULL) goto alloc_error;
