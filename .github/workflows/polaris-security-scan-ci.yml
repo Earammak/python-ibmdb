@@ -11,7 +11,7 @@ name: CI Polaris security scan
 
 on:
   push:
-    branches: [ "decfloat_issue_1075" ]
+    branches: ["decfloat_issue_1075"]
 
 jobs:
   polaris:
