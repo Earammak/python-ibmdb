@@ -36,6 +36,24 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install build setuptools wheel
 
+      - name: Validate Polaris token secret
+        env:
+          POLARIS_ACCESS_TOKEN: ${{ secrets.POLARIS_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$POLARIS_ACCESS_TOKEN" ]; then
+            echo "::error::POLARIS_ACCESS_TOKEN is not set in GitHub Actions secrets."
+            exit 1
+          fi
+          echo "POLARIS_ACCESS_TOKEN is set. Length: ${#POLARIS_ACCESS_TOKEN} characters."
+          if printf '%s' "$POLARIS_ACCESS_TOKEN" | grep -Eq '[[:space:]]'; then
+            echo "::error::POLARIS_ACCESS_TOKEN contains whitespace. Paste only the raw token value."
+            exit 1
+          fi
+          if ! printf '%s' "$POLARIS_ACCESS_TOKEN" | grep -Eq '^[A-Z2-7]+=*$'; then
+            echo "::error::POLARIS_ACCESS_TOKEN contains characters outside the base32 token format expected by Bridge CLI."
+            exit 1
+          fi
+
       - name: Polaris scan
         uses: blackduck-inc/black-duck-security-scan@v2.11.0
         with:
