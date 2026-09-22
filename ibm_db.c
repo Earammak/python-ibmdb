@@ -20012,17 +20012,34 @@ static PyObject* ibm_db_fetch_callproc(PyObject* self, PyObject* args)
 
         if (!skip_param) {
 
-            if (curr->cardinality > 1 || (curr->var_pyvalue && PyList_Check(curr->var_pyvalue))) {
-                SQLLEN len = curr->actual_cardinality;
-                if (curr->var_pyvalue && PyList_Check(curr->var_pyvalue)) {
-                    Py_ssize_t py_len = PyList_Size(curr->var_pyvalue);
-                    if (py_len > len) {
-                        len = py_len;
-                    }
+            int is_list_bound = curr->var_pyvalue && PyList_Check(curr->var_pyvalue);
+            if (curr->cardinality > 1 || is_list_bound) {
+                snprintf(messageStr, sizeof(messageStr),
+                    "Array output param %d: cardinality=%lld, actual_cardinality=%lld, is_list_bound=%d",
+                    curr->param_num, (long long)curr->cardinality, (long long)curr->actual_cardinality, is_list_bound);
+                LogMsg(DEBUG, messageStr);
+                if (curr->actual_cardinality < 0) {
+                    /* Negative actual_cardinality signals the whole array is NULL/unknown;
+                     * do not pad it out to the bound size with stale buffer contents. */
+                    LogMsg(DEBUG, "Array output param: actual_cardinality < 0, returning None");
+                    Py_DECREF(pyVal);
+                    pyVal = Py_None;
+                    Py_INCREF(pyVal);
+                    PyTuple_SET_ITEM(outTuple, idx++, pyVal);
+                    curr = curr->next;
+                    continue;
                 }
-                if (len <= 0) {
-                    len = curr->cardinality;
-                }
+                /* Use the driver's reported count as the list length, even if it
+                 * shrank from the bound size. Only fall back to the bound list's
+                 * own length when the declared cardinality is <= 1 (not set up as
+                 * a real array) but the Python side still bound a list to it, and
+                 * the driver gave no usable count back. */
+                SQLLEN len = (curr->actual_cardinality == 0 && curr->cardinality <= 1 && is_list_bound)
+                    ? PyList_Size(curr->var_pyvalue)
+                    : curr->actual_cardinality;
+                snprintf(messageStr, sizeof(messageStr),
+                    "Array output param %d: resolved output list length=%lld", curr->param_num, (long long)len);
+                LogMsg(DEBUG, messageStr);
                 PyObject *pyList = PyList_New(len);
                 if (!pyList) {
                     Py_DECREF(pyVal);
