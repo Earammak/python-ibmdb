@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - polaris_fix
-  # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
@@ -45,9 +44,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Check PyPI connectivity on runner
-         run: |
-             getent hosts pypi.org
-             curl -fsSI https://pypi.org/simple/setuptools/
+        shell: pwsh
+        run: |
+          curl.exe -fsSI https://pypi.org/simple/setuptools/
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.3.5
         env:
