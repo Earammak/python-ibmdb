@@ -43,10 +43,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - name: Check PyPI connectivity on runner
-        shell: pwsh
-        run: |
-          curl.exe -fsSI https://pypi.org/simple/setuptools/
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.3.5
         env:
@@ -71,6 +67,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+      - name: Check PyPI connectivity on runner
+        run: |
+          getent hosts pypi.org
+          curl -fsSI https://pypi.org/simple/setuptools/
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.3.5
         env:
