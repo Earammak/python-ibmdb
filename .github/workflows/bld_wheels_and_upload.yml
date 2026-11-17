@@ -67,10 +67,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - name: Check PyPI connectivity on runner
-        run: |
-          getent hosts pypi.org
-          curl -fsSI https://pypi.org/simple/setuptools/
+      - name: Download Linux build dependency
+        run: >-
+          python -m pip download --only-binary=:all: --no-deps --python-version 3.11
+          --dest .cibw-build-deps setuptools
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.3.5
         env:
@@ -81,15 +81,8 @@ jobs:
          CIBW_MANYLINUX_I686_IMAGE: manylinux_2_34
          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_34
          CIBW_SKIP: "*t-* cp39-* cp310-* pp39-* pp310-* *-musllinux_* *-*linux_{aarch64,ppc64le}"
-         CIBW_BEFORE_ALL_LINUX: |
-           echo "Architecture:"
-           uname -m
-
-           echo "DNS:"
-           getent hosts pypi.org || true
-
-           echo "HTTPS:"
-           curl -fsSI https://pypi.org/simple/setuptools/ || true
+         CIBW_BUILD_FRONTEND: "build; args: --no-isolation"
+         CIBW_BEFORE_BUILD_LINUX: "python -m pip install --no-index --find-links=/project/.cibw-build-deps setuptools"
          CIBW_REPAIR_WHEEL_COMMAND_LINUX:
             auditwheel repair
               --disable-isa-ext-check
